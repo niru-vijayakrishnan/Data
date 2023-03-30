@@ -46,6 +46,8 @@ y_clean = data_clean['event']
 X_DATA = X_clean.values.tolist()
 Y_DATA = y_clean.values.tolist()
 
+
+#.txt file formatting
 for i in range(len(X_DATA)):
     X_DATA[i].append(Y_DATA[i])
 print("hi")
