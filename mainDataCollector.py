@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 #To Change Between Datasets
-DataFile = "AdultData.txt"
+DataFile = "CompasData.txt"
 loss = "l1"
 
 identifyingIndex = 0
