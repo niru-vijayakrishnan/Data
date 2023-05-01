@@ -1,22 +1,8 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
-#To Change Between Datasets
-DataFile = "CompasData.txt"
 loss = "l1"
-
-identifyingIndex = 0
-DataName = DataFile.replace(".txt", '')
-X_DATA = []
-Y_DATA = []
-with open(DataFile) as data_file:
-    for line in data_file:
-        dataLine = line.split()
-        Y_DATA.append(float(dataLine.pop()))
-        X_DATA.append(dataLine)
-for i in range(len(X_DATA)):
-    for j in range(len(X_DATA[i])):
-        X_DATA[i][j] = float(X_DATA[i][j])
 
 def getStatisticalParity(idenFeature, testX, predictedY):
     group1X = []
@@ -81,7 +67,7 @@ from sklearn.linear_model import SGDClassifier
 def getZeroes(list):
     count = 0
     for num in list:
-        if num >= .1:
+        if abs(num) >= .1:
             count += 1
     return count
 
@@ -131,6 +117,32 @@ def getMinimum(data, weight, index):
                 dataPoint = [index, data[i][4], data[i][1], data[i][2], data[i][3]]
     return dataPoint
 
+def getUniques(list, index):
+    diffUniques = []
+    for i in range(len(list)):
+        diffUniques.append(list[i][index])
+    uniques = np.unique(diffUniques)
+    return uniques.tolist()
+
+def formatData(data):
+    statisticalParityX = []
+    statisticalParityY = []
+    equalityOfOpportunityX = []
+    equalityOfOpportunityY = []
+    accuracyX = []
+    accuracyY = []
+    for i in range(len(data)):
+        if(data[i][0] == 1):
+            statisticalParityX.append(data[i][1])
+            statisticalParityY.append(data[i][2])
+        elif(data[i][0] == 2):
+            equalityOfOpportunityX.append(data[i][1])
+            equalityOfOpportunityY.append(data[i][3])
+        elif(data[i][0] == 3):
+            accuracyX.append(data[i][1])
+            accuracyY.append(data[i][4])
+    return [statisticalParityX, statisticalParityY, equalityOfOpportunityX, equalityOfOpportunityY, accuracyX, accuracyY]
+
 def getMinimums(data):
     cleanedData = []
     weights = getUniqueWeights(data)
@@ -146,14 +158,47 @@ def writeExcel(data):
     df = pd.DataFrame(minimums, columns = ['Measurement Type','Number of Weights','Statistical Parity','Equality of Opportunity', 'Accuracy'])
     df.to_excel("Cleaned" + DataName + loss + "Loss.xlsx", sheet_name='Data')
 
-#print(X_clean)
-#print(X_clean.columns)
-#print(X_DATA[0][52])
+def graph(data):
+    minimums = getMinimums(data)
+    rdyToGraph = formatData(minimums)
+    plt.plot(rdyToGraph[0],rdyToGraph[1])
+    plt.xlabel('Number of Weights')
+    plt.ylabel('Statistical Parity')
+    plt.title("Number of Weights vs Statistical Parity")
+    plt.show()
+    plt.plot(rdyToGraph[2],rdyToGraph[3])
+    plt.xlabel('Number of Weights')
+    plt.ylabel('Equality of Opportunity')
+    plt.title("Number of Weights vs Equality of Opportunity")
+    plt.show()
+    plt.plot(rdyToGraph[4],rdyToGraph[5])
+    plt.xlabel('Number of Weights')
+    plt.ylabel('Accuracy')
+    plt.title("Number of Weights vs Accuracy")
+    plt.show()
 
-totalData = []
-for i in range(1,1000):
-    print(i)
-    weight = i/10000
-    totalData.append(getLogisticRegressionData(weight,X_DATA, Y_DATA, X_DATA, Y_DATA, identifyingIndex))
+def graphData(DataFile):
+    identifyingIndex = 0
+    DataName = DataFile.replace(".txt", '')
+    X_DATA = []
+    Y_DATA = []
+    with open(DataFile) as data_file:
+        for line in data_file:
+            dataLine = line.split()
+            Y_DATA.append(float(dataLine.pop()))
+            X_DATA.append(dataLine)
+    for i in range(len(X_DATA)):
+        for j in range(len(X_DATA[i])):
+            X_DATA[i][j] = float(X_DATA[i][j])
 
-writeExcel(totalData)
+    totalData = []
+    for i in range(1,1000):
+        print(i)
+        weight = i/10000
+        totalData.append(getLogisticRegressionData(weight,X_DATA, Y_DATA, X_DATA, Y_DATA, identifyingIndex))
+
+    graph(totalData)
+    #writeExcel(totalData)
+
+graphData("GermanData.txt")
+

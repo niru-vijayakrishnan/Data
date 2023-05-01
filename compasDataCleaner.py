@@ -8,7 +8,7 @@ data = pd.read_csv('cox-violent-parsed_filt.csv',header = 0, delimiter=',')
 
 #numerical variables labels
 numvars = ['age', 'juv_fel_count', 'decile_score', 'juv_misd_count',
-           'juv_other_count', 'priors_count', 'days_b_screening_arrest',
+           'juv_other_count', 'priors_count',
            'is_recid', 'is_violent_recid', 'decile_score', 'v_decile_score', 'priors_count',
            'event']
 
@@ -17,8 +17,7 @@ numdata_std = pd.DataFrame(StandardScaler().fit_transform(data[numvars].drop(['e
 from collections import defaultdict
 
 #categorical variables labels
-catvars = ['sex','race','c_charge_degree', 'c_charge_desc', 'r_charge_degree','r_charge_desc','violent_recid',
-           'vr_charge_degree','vr_charge_desc', 'type_of_assessment', 'score_text',
+catvars = ['sex','race', 'type_of_assessment', 'score_text',
            'v_type_of_assessment', 'v_score_text']
 
 d = defaultdict(LabelEncoder)
