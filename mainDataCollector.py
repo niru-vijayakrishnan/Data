@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+#To Change Between Datasets
+DataFile = "AdultData.txt"
 loss = "l1"
 
 def getStatisticalParity(idenFeature, testX, predictedY):
@@ -78,6 +80,7 @@ def getLogisticRegressionData(alpha, trainX, trainY, testX, testY, identifyingFe
 
     predictedY = clf.predict(testX)
 
+    print(clf.coef_[0])
     zeroes = getZeroes(clf.coef_[0]) #number of non-zero weights
 
     statisticalParity = getStatisticalParity(identifyingFeature, testX, predictedY)
@@ -108,11 +111,11 @@ def getUniqueWeights(data):
     return uniqueWeights.tolist()
 
 def getMinimum(data, weight, index):
-    minimum = 0
+    minimum = 10000000000000
     dataPoint = []
     for i in range(len(data)):
         if data[i][4] == weight:
-            if data[i][index] >= minimum:
+            if data[i][index] <= minimum:
                 minimum = data[i][index]
                 dataPoint = [index, data[i][4], data[i][1], data[i][2], data[i][3]]
     return dataPoint
@@ -151,7 +154,7 @@ def getMinimums(data):
             cleanedData.append(getMinimum(data, num, i+1))
     return cleanedData
 
-def writeExcel(data):
+def writeExcel(data, DataName):
     df = pd.DataFrame(data, columns = ['Regularizer','Statistical Parity','Equality of Opportunity','Accuracy', 'Number of Weights'])
     df.to_excel("Raw" + DataName + loss + "Loss.xlsx", sheet_name='Data')
     minimums = getMinimums(data)
@@ -196,9 +199,6 @@ def graphData(DataFile):
         print(i)
         weight = i/10000
         totalData.append(getLogisticRegressionData(weight,X_DATA, Y_DATA, X_DATA, Y_DATA, identifyingIndex))
-
     graph(totalData)
-    #writeExcel(totalData)
 
 graphData("GermanData.txt")
-
