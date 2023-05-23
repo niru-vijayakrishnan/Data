@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from pprint import pp
 
 #To Change Between Datasets
 DataFile = "AdultData.txt"
@@ -80,7 +81,8 @@ def getLogisticRegressionData(alpha, trainX, trainY, testX, testY, identifyingFe
 
     predictedY = clf.predict(testX)
 
-    print(clf.coef_[0])
+    listOfWeights = [value for value in clf.coef_[0] if value != 0]
+    #print(listOfWeights)
     zeroes = getZeroes(clf.coef_[0]) #number of non-zero weights
 
     statisticalParity = getStatisticalParity(identifyingFeature, testX, predictedY)
@@ -98,7 +100,7 @@ def getLogisticRegressionData(alpha, trainX, trainY, testX, testY, identifyingFe
     accuracy = total/(len(testX))
     #print("Accuracy: " + str(accuracy))
 
-    return [alpha, statisticalParity, equalityOfOpportunity, accuracy, zeroes]
+    return [alpha, statisticalParity, equalityOfOpportunity, accuracy, zeroes, listOfWeights]
 
 #DATA COLLECTION COMPLETE
 
@@ -109,16 +111,6 @@ def getUniqueWeights(data):
         diffWeights.append(data[i][4])
     uniqueWeights = np.unique(diffWeights)
     return uniqueWeights.tolist()
-
-def getMinimum(data, weight, index):
-    minimum = 10000000000000
-    dataPoint = []
-    for i in range(len(data)):
-        if data[i][4] == weight:
-            if data[i][index] <= minimum:
-                minimum = data[i][index]
-                dataPoint = [index, data[i][4], data[i][1], data[i][2], data[i][3]]
-    return dataPoint
 
 def getUniques(list, index):
     diffUniques = []
@@ -146,23 +138,46 @@ def formatData(data):
             accuracyY.append(data[i][4])
     return [statisticalParityX, statisticalParityY, equalityOfOpportunityX, equalityOfOpportunityY, accuracyX, accuracyY]
 
-def getMinimums(data):
+def getMinimumsOrMaximums(data):
+    #pp(data)
     cleanedData = []
     weights = getUniqueWeights(data)
-    for i in range(3):
+    for i in range(2):
         for num in weights:
             cleanedData.append(getMinimum(data, num, i+1))
+    for num in weights:
+        cleanedData.append(getMaximum(data, num, 3))
     return cleanedData
+
+def getMaximum(data, weight, index):
+    maximum = 0
+    dataPoint = []
+    for i in range(len(data)):
+        if data[i][4] == weight:
+            if data[i][index] >= maximum:
+                maximum = data[i][index]
+                dataPoint = [index, data[i][4], data[i][1], data[i][2], data[i][3]]
+    return dataPoint
+
+def getMinimum(data, weight, index):
+    minimum = 10000000000000
+    dataPoint = []
+    for i in range(len(data)):
+        if data[i][4] == weight:
+            if data[i][index] <= minimum:
+                minimum = data[i][index]
+                dataPoint = [index, data[i][4], data[i][1], data[i][2], data[i][3]]
+    return dataPoint
 
 def writeExcel(data, DataName):
     df = pd.DataFrame(data, columns = ['Regularizer','Statistical Parity','Equality of Opportunity','Accuracy', 'Number of Weights'])
     df.to_excel("Raw" + DataName + loss + "Loss.xlsx", sheet_name='Data')
-    minimums = getMinimums(data)
+    minimums = getMinimumsOrMaximums(data)
     df = pd.DataFrame(minimums, columns = ['Measurement Type','Number of Weights','Statistical Parity','Equality of Opportunity', 'Accuracy'])
     df.to_excel("Cleaned" + DataName + loss + "Loss.xlsx", sheet_name='Data')
 
 def graph(data):
-    minimums = getMinimums(data)
+    minimums = getMinimumsOrMaximums(data)
     rdyToGraph = formatData(minimums)
     plt.plot(rdyToGraph[0],rdyToGraph[1])
     plt.xlabel('Number of Weights')
@@ -180,6 +195,15 @@ def graph(data):
     plt.title("Number of Weights vs Accuracy")
     plt.show()
 
+def graphWeights(list):
+    x = []
+    for i in range(len(list)):
+        x.append(i + 1)
+    x = np.array(x)
+    y = np.array(list)
+    plt.scatter(x,y)
+    plt.show()
+
 def graphData(DataFile):
     identifyingIndex = 0
     DataName = DataFile.replace(".txt", '')
@@ -193,12 +217,22 @@ def graphData(DataFile):
     for i in range(len(X_DATA)):
         for j in range(len(X_DATA[i])):
             X_DATA[i][j] = float(X_DATA[i][j])
-
     totalData = []
     for i in range(1,1000):
-        print(i)
+        if i % 10 == 0:
+            print(str(int(i/10)) + "%")
         weight = i/10000
         totalData.append(getLogisticRegressionData(weight,X_DATA, Y_DATA, X_DATA, Y_DATA, identifyingIndex))
+    totalWeights = []
+    for row in totalData:
+        if row:  # Ensure the row is not empty
+            last_element = row.pop()
+            for num in last_element:
+                totalWeights.append(abs(num))
+    totalWeights = sorted(totalWeights)
+    graphWeights(totalWeights)
+    #print(totalWeights)
     graph(totalData)
+    #writeExcel(totalData)
 
 graphData("GermanData.txt")
