@@ -138,6 +138,39 @@ def formatData(data):
             accuracyY.append(data[i][4])
     return [statisticalParityX, statisticalParityY, equalityOfOpportunityX, equalityOfOpportunityY, accuracyX, accuracyY]
 
+def doPointDomination(data):
+    statisticalParityX = data[0]
+    statisticalParityY = data[1]
+    equalityOfOpportunityX = data[2]
+    equalityOfOpportunityY = data[3]
+    accuracyX = data[4]
+    accuracyY = data[5]
+    newStatisticalParityX = []
+    newStatisticalParityY = []
+    newEqualityOfOpportunityX = []
+    newEqualityOfOpportunityY = []
+    newAccuracyX = []
+    newAccuracyY = []
+    maxStatisticalParity = float('-inf')
+    for i in range(len(statisticalParityY)):
+        if statisticalParityY[i] >= maxStatisticalParity:
+            newStatisticalParityX.append(statisticalParityX[i])
+            newStatisticalParityY.append(statisticalParityY[i])
+            maxStatisticalParity = statisticalParityY[i]
+    maxEqualityOfOpportunity = float('-inf')
+    for i in range(len(equalityOfOpportunityY)):
+        if equalityOfOpportunityY[i] >= maxEqualityOfOpportunity:
+            newEqualityOfOpportunityX.append(equalityOfOpportunityX[i])
+            newEqualityOfOpportunityY.append(equalityOfOpportunityY[i])
+            maxEqualityOfOpportunity = equalityOfOpportunityY[i]
+    maxAccuracy = float('-inf')
+    for i in range(len(accuracyY)):
+        if accuracyY[i] >= maxAccuracy:
+            newAccuracyX.append(accuracyX[i])
+            newAccuracyY.append(accuracyY[i])
+            maxAccuracy = accuracyY[i]
+    return [newStatisticalParityX, newStatisticalParityY, newEqualityOfOpportunityX, newEqualityOfOpportunityY, newAccuracyX, newAccuracyY]
+
 def getMinimumsOrMaximums(data):
     #pp(data)
     cleanedData = []
@@ -160,7 +193,7 @@ def getMaximum(data, weight, index):
     return dataPoint
 
 def getMinimum(data, weight, index):
-    minimum = 10000000000000
+    minimum = float('inf')
     dataPoint = []
     for i in range(len(data)):
         if data[i][4] == weight:
@@ -178,7 +211,8 @@ def writeExcel(data, DataName):
 
 def graph(data):
     minimums = getMinimumsOrMaximums(data)
-    rdyToGraph = formatData(minimums)
+    organizedData = formatData(minimums)
+    rdyToGraph = doPointDomination(organizedData)
     plt.plot(rdyToGraph[0],rdyToGraph[1])
     plt.xlabel('Number of Weights')
     plt.ylabel('Statistical Parity')
