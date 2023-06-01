@@ -3,6 +3,7 @@ from sklearn.metrics import classification_report,confusion_matrix, roc_curve, r
 from sklearn.model_selection import ShuffleSplit,train_test_split, cross_val_score, GridSearchCV
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, label_binarize, StandardScaler, MinMaxScaler
 import numpy as np
+from pprint import pp
 
 data = pd.read_csv('cox-violent-parsed_filt.csv',header = 0, delimiter=',')
 
@@ -62,6 +63,7 @@ Y_DATA = y_clean.values.tolist()
 #.txt file formatting
 for i in range(len(X_DATA)):
     X_DATA[i].append(Y_DATA[i])
+#print(len(X_DATA))
 myFile = open("CompasData.txt", 'r+')
 myArray = np.array(X_DATA)
 np.savetxt(myFile, myArray)
