@@ -313,5 +313,41 @@ def graphData(DataFile, threshold, loss):
     graph(totalData, DataName, threshold)
     #writeExcel(totalData, loss)
 
-for i in range(1,10):
-    graphData("CompasData.txt", threshold = i*.2, loss = "l2")
+def getWeightThresholds(DataFile, threshold, loss):
+    identifyingIndex = 0
+    DataName = DataFile.replace(".txt", '')
+    X_DATA = []
+    Y_DATA = []
+    with open(DataFile) as data_file:
+        for line in data_file:
+            dataLine = line.split()
+            Y_DATA.append(float(dataLine.pop()))
+            X_DATA.append(dataLine)
+    for i in range(len(X_DATA)):
+        for j in range(len(X_DATA[i])):
+            X_DATA[i][j] = float(X_DATA[i][j])
+    totalData = []
+    for i in range(1,1000):
+        if i % 10 == 0:
+            print(str(int(i/10)) + "%")
+        weight = i/10000
+        totalData.append(getLogisticRegressionData(weight,X_DATA, Y_DATA, X_DATA, Y_DATA, identifyingIndex, threshold, loss))
+    totalWeights = []
+    for row in totalData:
+        if row:  # Ensure the row is not empty
+            last_element = row.pop()
+            for num in last_element:
+                totalWeights.append(abs(num))
+    totalWeights = sorted(totalWeights)
+    return totalWeights
+
+def main(DataFile, loss):
+    weights = getWeightThresholds(DataFile, 1, loss=loss)
+    thresholds = []
+    for i in range(1,8):
+        thresholds.append(weights[int(len(weights)*(1-(i*.05)))])
+    print(thresholds)
+    for threshold in thresholds:
+        graphData(DataFile, threshold, loss = loss)
+
+main("CompasData.txt", "l2")
