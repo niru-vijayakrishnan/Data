@@ -1,8 +1,10 @@
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import SGDClassifier
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from CustomModel import *
+from pprint import pp
 
 class DataCollector:
 
@@ -10,7 +12,7 @@ class DataCollector:
     #CustomModel.py -> Functions Must Be fit(trainX,trainY), getWeights(), predict(testX)
     
     #Constructor
-    def __init__(self,DataFile, penalty, loss="log_loss", regularizationMultiplier=10000,numOfIterations=1000, isCustomModel=False):
+    def __init__(self,DataFile, penalty, loss="log_loss", regularizationMultiplier=10000,numOfIterations=1000, modelType="GradientDescent", pointDomination = True):
         self.DataFile = DataFile
         self.Name = DataFile.replace(".txt", '')
         self.readTextFile()
@@ -18,7 +20,8 @@ class DataCollector:
         self.penalty = penalty
         self.regularizationMultiplier = regularizationMultiplier
         self.numOfIterations = numOfIterations
-        self.isCustomModel = isCustomModel
+        self.modelType = modelType
+        self.pointDomination = pointDomination
 
     def readTextFile(self):
         #Separates Data into X and Y from .txt file
@@ -45,10 +48,12 @@ class DataCollector:
         self.totalWeights = []
         for i in range(1,self.numOfIterations):
             print("Percentage: " + str(i/self.numOfIterations))
-            if(self.isCustomModel == False):
+            if(self.modelType == "GradientDescent"):
                 clf = SGDClassifier(loss=self.loss, penalty=self.penalty, alpha = i/self.regularizationMultiplier, max_iter=1000, fit_intercept=True)
                 clf.fit(self.X_DATA, self.Y_DATA)
                 listOfWeights = [value for value in clf.coef_[0] if value != 0]
+            elif(self.modelType == "GradientBoostingClassifier"):
+                pass
             else:
                 pass #To Be Implemented
             for weight in listOfWeights:
@@ -72,17 +77,31 @@ class DataCollector:
         plt.scatter(x,y)
         plt.show()
 
-    def collectData(self,threshold,PointDomination="True"):
+    def collectData(self,threshold = 0.1):
         self.RawData = []
-        for i in range(1,self.numOfIterations):
-            print("Percentage: " + str(i/self.numOfIterations))
-            self.RawData.append(self.getLogisticRegressionData(i/self.regularizationMultiplier,self.X_DATA, self.Y_DATA, self.X_DATA, self.Y_DATA, threshold))
+        if(self.modelType == "GradientDescent"):
+            for i in range(1,self.numOfIterations):
+                print("Percentage: " + str(i/self.numOfIterations))
+                self.RawData.append(self.getLogisticRegressionData(i/self.regularizationMultiplier,self.X_DATA, self.Y_DATA, self.X_DATA, self.Y_DATA, threshold))
+        elif(self.modelType == "GradientBoostingClassifier"):
+            for i in range(len(self.X_DATA[0])):
+                print("Percentage: " + str(i/len(self.X_DATA[0])))
+                self.RawData.append(self.getLogisticRegressionData(i+1,self.X_DATA, self.Y_DATA, self.X_DATA, self.Y_DATA, threshold))
         optimizedData = self.optimizeForMinimumsOrMaximums(self.RawData)
         formattedData = self.formatData(optimizedData)
-        if(PointDomination):
+        if(self.pointDomination):
             self.cleanedData = self.doPointDomination(formattedData)
         else:
             self.cleanedData = formattedData
+
+    def writeExcel(self):
+        DataName = self.Name
+        try:
+            hasattr(self.RawData)
+        except:
+            self.collectData()
+        df = pd.DataFrame(self.RawData, columns = ['Regularizer','Statistical Parity','Equality of Opportunity','Accuracy', 'Number of Weights'])
+        df.to_excel("Raw" + DataName + self.loss + "Loss.xlsx", sheet_name='Data')
 
     def graphData(self, threshold):
         try:
@@ -115,7 +134,10 @@ class DataCollector:
         plt.ylabel('Accuracy')
         plt.title("Maximized for Accuracy")
         plt.tight_layout()
-        plt.savefig(self.Name + "Threshold" + str(threshold) + ".png")
+        if(self.modelType == "GradientDescent"):
+            plt.savefig(self.Name + "Threshold" + str(threshold) + ".png")
+        elif(self.modelType == "GradientBoostingClassifier"):
+            plt.savefig(self.Name + ".png")
         #plt.show()
 
     def doPointDomination(self, data):
@@ -239,11 +261,16 @@ class DataCollector:
 
     #Gets Logistic Regression Data
     def getLogisticRegressionData(self, alpha, trainX, trainY, testX, testY, threshold, identifyingFeature=0):
-        if(self.isCustomModel == False):
+        if(self.modelType == "GradientDescent"):
             clf = SGDClassifier(loss=self.loss, penalty=self.penalty, alpha = alpha, max_iter=1000, fit_intercept=True)
             clf.fit(trainX, trainY)
             predictedY = clf.predict(testX)
             numOfWeights = self.countWeights(clf.coef_[0], threshold) #number of non-zero weights
+        elif(self.modelType == "GradientBoostingClassifier"):
+            gbc = GradientBoostingClassifier(n_estimators=500,learning_rate=0.05,random_state=100,max_features=alpha, loss=self.loss)
+            gbc.fit(trainX, trainY)
+            predictedY = gbc.predict(testX)
+            numOfWeights = alpha
         else:
             pass #To Be Implemented
         statisticalParity = self.getStatisticalParity(identifyingFeature, testX, predictedY)
