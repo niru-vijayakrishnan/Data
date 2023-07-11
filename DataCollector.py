@@ -54,6 +54,11 @@ class DataCollector:
                 listOfWeights = [value for value in clf.coef_[0] if value != 0]
             elif(self.modelType == "GradientBoostingClassifier"):
                 pass
+            elif(self.modelType == "CustomModel"):
+                model = CustomModel()
+                loss = model.logistic_loss_plus_l2
+                weights, loss, iterations = model.gradient_descent(self.X_DATA, self.Y_DATA, loss, alpha=i/self.regularizationMultiplier)
+                listOfWeights = [value for value in weights if value != 0]
             else:
                 pass #To Be Implemented
             for weight in listOfWeights:
@@ -87,6 +92,9 @@ class DataCollector:
             for i in range(len(self.X_DATA[0])):
                 print("Percentage: " + str(i/len(self.X_DATA[0])))
                 self.RawData.append(self.getLogisticRegressionData(i+1,self.X_DATA, self.Y_DATA, self.X_DATA, self.Y_DATA, threshold))
+        elif(self.modelType == "CustomModel"):
+            for i in range(0,4):
+                self.RawData.append(self.getLogisticRegressionData(10**i,self.X_DATA, self.Y_DATA, self.X_DATA, self.Y_DATA, threshold))
         optimizedData = self.optimizeForMinimumsOrMaximums(self.RawData)
         formattedData = self.formatData(optimizedData)
         if(self.pointDomination):
@@ -134,11 +142,11 @@ class DataCollector:
         plt.ylabel('Accuracy')
         plt.title("Maximized for Accuracy")
         plt.tight_layout()
-        if(self.modelType == "GradientDescent"):
+        if(self.modelType == "GradientDescent" or self.modelType == "CustomModel"):
             plt.savefig(self.Name + "Threshold" + str(threshold) + ".png")
         elif(self.modelType == "GradientBoostingClassifier"):
             plt.savefig(self.Name + ".png")
-        #plt.show()
+        plt.show()
 
     def doPointDomination(self, data):
         statisticalParityX = data[0]
@@ -271,6 +279,16 @@ class DataCollector:
             gbc.fit(trainX, trainY)
             predictedY = gbc.predict(testX)
             numOfWeights = alpha
+        elif(self.modelType == "CustomModel"):
+            model = CustomModel()
+            loss = model.logistic_loss_plus_l2
+            weights, loss, iterations = model.gradient_descent(trainX, trainY, loss, alpha)
+            predictedY = model.predict(weights, testX)
+            print(trainY)
+            print(predictedY)
+            for i in range(len(predictedY)):
+                predictedY[i] = round(predictedY[i])
+            numOfWeights = self.countWeights(weights, threshold)
         else:
             pass #To Be Implemented
         statisticalParity = self.getStatisticalParity(identifyingFeature, testX, predictedY)
