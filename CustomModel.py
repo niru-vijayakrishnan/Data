@@ -40,11 +40,11 @@ class CustomModel:
             if(self.lossType == "logistic"):
                 pass
             elif(self.lossType == "linear"):
-                self.getGradientLinearRegressionPlusL2(X, y, weights, alpha)
-            gradient = np.dot(X.T, error) / num_samples
+                gradient = self.getGradientLinearRegressionPlusL2Squared(X, y, weights, alpha)
+            #gradient = np.dot(X.T, error) / num_samples
             new_weights = weights - learning_rate * gradient
             new_loss = loss_func(predictions, y, new_weights, alpha)
-
+            print(loss-new_loss)
             if abs(loss - new_loss) < epsilon:
                 break
 
@@ -55,7 +55,7 @@ class CustomModel:
         self.weights = weights
         return weights, loss, iteration
     
-    def getGradientLinearRegressionPlusL2(self, X, y, weights, alpha):
+    def getGradientLinearRegressionPlusL2Squared(self, X, y, weights, alpha):
         sum = np.zeros(len(X[0]))
         for i in range(len(X)):
             difference = self.predictOne(weights, X[i]) - y[i]
